@@ -51,6 +51,8 @@ namespace ContosoUniversity {
             app.UseStaticFiles();
             app.UseCookiePolicy();
 
+            // In the following URL, the default route maps Instructor as the controller,
+            // Index as the action, and 1 as the id; these are route data values.
             app.UseMvc(routes => {
                 routes.MapRoute(
                     name: "default",
