@@ -12,4 +12,13 @@
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.2.3" />
   </ItemGroup>
 
+
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="Views\Courses\Create.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Courses\Delete.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Courses\Details.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Courses\Edit.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Courses\Index.cshtml" />
+  </ItemGroup>
+
 </Project>
