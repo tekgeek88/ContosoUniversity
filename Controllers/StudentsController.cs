@@ -19,8 +19,55 @@ namespace ContosoUniversity.Controllers {
         }
 
         // GET: Students
-        public async Task<IActionResult> Index() {
-            return View(await _context.Students.ToListAsync());
+        // Modifying the index page to be able to load with a sorted order
+        public async Task<IActionResult> Index(
+            string sortOrder, 
+            string currentFilter,
+            string searchString,
+            int? pageNumber) {
+            // added this line so we can remember the page number and the sort the page was on
+            ViewData["CurrentSort"] = sortOrder;
+            ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+            ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
+            // This line was removed to allow us to keep track of pages
+            //            ViewData["currentFilter"] = searchString;
+
+            if (searchString != null) {
+                pageNumber = 1;
+            }
+            else {
+                searchString = currentFilter;
+            }
+
+            ViewData["CurrentFilter"] = searchString;
+            
+            var students = from s in _context.Students select s;
+
+            if (!String.IsNullOrEmpty(searchString)) {
+                students = students.Where(
+                    s => s.LastName.Contains(searchString) ||
+                         s.FirstMidName.Contains(searchString));
+            }
+            
+            switch (sortOrder) {
+                case "name_desc":
+                    students = students.OrderByDescending(s => s.LastName);
+                    break;
+                case "Date":
+                    students = students.OrderBy(s => s.EnrollmentDate);
+                    break;
+
+                case "date_desc":
+
+                    students = students.OrderByDescending(s => s.EnrollmentDate);
+                    break;
+                default:
+                    students = students.OrderBy(s => s.LastName);
+                    break;
+            }
+
+            int pageSize = 3;
+            return View(await PaginatedList<Student>.CreateAsync(students.AsNoTracking(), pageNumber ?? 1, pageSize));
         }
 
         // GET: Students/Details/5
@@ -59,7 +106,6 @@ namespace ContosoUniversity.Controllers {
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("LastName,FirstMidName,EnrollmentDate")]
             Student student) {
-
             try {
                 if (ModelState.IsValid) {
                     _context.Add(student);
