@@ -32,8 +32,9 @@ namespace ContosoUniversity.Controllers {
             // Adding code that Scaffolding API left out because the propert holds a collection.
             // The added code allows us to display on the Deatails page the contents using an HTML table.
             var student = await _context.Students
-            // The Include and ThenInclude methods cause the context to load the Student.Enrollments
-            // navigation property,and within each enrollment the Enrollment.Course navigation property.
+
+                // The Include and ThenInclude methods cause the context to load the Student.Enrollments
+                // navigation property,and within each enrollment the Enrollment.Course navigation property.
                 .Include(s => s.Enrollments)
                 .ThenInclude(e => e.Course)
 
@@ -100,24 +101,30 @@ namespace ContosoUniversity.Controllers {
         // POST: Students/Edit/5
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
+        [HttpPost, ActionName("Edit")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id,
-            [Bind("ID,LastName,FirstMidName,EnrollmentDate")]
-            Student student) {
-            if (id != student.ID) {
+        public async Task<IActionResult> EditPost(int? id) {
+            if (id == null) {
                 return NotFound();
             }
 
             var studentToUpdate = await _context.Students.FirstOrDefaultAsync(s => s.ID == id);
 
-            if (await TryUpdateModelAsync(studentToUpdate, "", s => s.FirstMidName, s => s.LastName,
-                s => s.EnrollmentDate)) {
+            if (await TryUpdateModelAsync<Student>(
+                studentToUpdate,
+                "",
+                s => s.FirstMidName, s => s.LastName, s => s.EnrollmentDate)) {
                 try {
                     await _context.SaveChangesAsync();
                     return RedirectToAction(nameof(Index));
                 }
+                /**
+                 * The scaffold code uses the create-and-attach approach but only catches DbUpdateConcurrencyException
+                 * exceptions and returns 404 error codes. The example shown catches any database update exception and
+                 * displays an error message.
+                 */
                 catch (DbUpdateException /* ex */) {
+                    //Log the error (uncomment ex variable name and write a log.)
                     ModelState.AddModelError("", "Unable to save changes. " +
                                                  "Try again, and if the problem persists, " +
                                                  "see your system administrator.");
