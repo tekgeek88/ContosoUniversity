@@ -32,6 +32,8 @@ namespace ContosoUniversity.Controllers {
             // Adding code that Scaffolding API left out because the propert holds a collection.
             // The added code allows us to display on the Deatails page the contents using an HTML table.
             var student = await _context.Students
+            // The Include and ThenInclude methods cause the context to load the Student.Enrollments
+            // navigation property,and within each enrollment the Enrollment.Course navigation property.
                 .Include(s => s.Enrollments)
                 .ThenInclude(e => e.Course)
 
@@ -57,10 +59,13 @@ namespace ContosoUniversity.Controllers {
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("LastName,FirstMidName,EnrollmentDate")]
+        public async Task<IActionResult> Create(
+            [Bind("LastName,FirstMidName,EnrollmentDate")]
             Student student) {
-
+            // This code adds the Student entity created by the ASP.NET Core MVC model binder
+            // to the Students entity set and then saves the changes to the database.
             try {
+                // The default validation check to check the fields values are within the requirements of our datamodel.
                 if (ModelState.IsValid) {
                     _context.Add(student);
                     await _context.SaveChangesAsync();
@@ -68,6 +73,7 @@ namespace ContosoUniversity.Controllers {
                 }
             }
             catch (DbUpdateException /* ex */) {
+                //Log the error (uncomment ex variable name and write a log.
                 ModelState.AddModelError("", "Unable to save changes. " +
                                              "Try again, and if the problem persists " +
                                              "see your system administrator.");
@@ -121,6 +127,12 @@ namespace ContosoUniversity.Controllers {
             return View(studentToUpdate);
         }
 
+        /**
+         * This code accepts an optional parameter that indicates whether the method was called after a
+         * failure to save changes. This parameter is false when the HttpGet Delete method is called without
+         * a previous failure. When it's called by the HttpPost Delete method in response to a database update
+         * error, the parameter is true and an error message is passed to the view.
+         */
         // GET: Students/Delete/5
         // Modified this method to allow for error handling on the delete operation
         public async Task<IActionResult> Delete(int? id, bool? saveChangesError = false) {
