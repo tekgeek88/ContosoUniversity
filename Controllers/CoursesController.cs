@@ -56,55 +56,52 @@ namespace ContosoUniversity.Controllers {
             PopulateDepartmentsDropDownList();
             return View();
         }
-        
-        
+
+
         /**
          * 
          */
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("CourseID,Credits,DepartmentID,Title")] Course course)
-        {
-            if (ModelState.IsValid)
-            {
+        public async Task<IActionResult> Create([Bind("CourseID,Credits,DepartmentID,Title")]
+            Course course) {
+            if (ModelState.IsValid) {
                 _context.Add(course);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+
             PopulateDepartmentsDropDownList(course.DepartmentID);
             return View(course);
         }
-        
-        
+
+
         /**
          * The HttpGet Edit method sets the selected item, based on the ID of the department
          * that's already assigned to the course being edited:
          */
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
+        public async Task<IActionResult> Edit(int? id) {
+            if (id == null) {
                 return NotFound();
             }
 
             var course = await _context.Courses
                 .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.CourseID == id);
-            if (course == null)
-            {
+
+            if (course == null) {
                 return NotFound();
             }
+
             PopulateDepartmentsDropDownList(course.DepartmentID);
             return View(course);
         }
-        
-        
+
+
         [HttpPost, ActionName("Edit")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditPost(int? id)
-        {
-            if (id == null)
-            {
+        public async Task<IActionResult> EditPost(int? id) {
+            if (id == null) {
                 return NotFound();
             }
 
@@ -113,32 +110,31 @@ namespace ContosoUniversity.Controllers {
 
             if (await TryUpdateModelAsync<Course>(courseToUpdate,
                 "",
-                c => c.Credits, c => c.DepartmentID, c => c.Title))
-            {
-                try
-                {
+                c => c.Credits, c => c.DepartmentID, c => c.Title)) {
+                try {
                     await _context.SaveChangesAsync();
                 }
-                catch (DbUpdateException /* ex */)
-                {
+                catch (DbUpdateException /* ex */) {
                     //Log the error (uncomment ex variable name and write a log.)
                     ModelState.AddModelError("", "Unable to save changes. " +
                                                  "Try again, and if the problem persists, " +
                                                  "see your system administrator.");
                 }
+
                 return RedirectToAction(nameof(Index));
             }
+
             PopulateDepartmentsDropDownList(courseToUpdate.DepartmentID);
             return View(courseToUpdate);
         }
-        
-        
-        private void PopulateDepartmentsDropDownList(object selectedDepartment = null)
-        {
+
+
+        private void PopulateDepartmentsDropDownList(object selectedDepartment = null) {
             var departmentsQuery = from d in _context.Departments
                 orderby d.Name
                 select d;
-            ViewBag.DepartmentID = new SelectList(departmentsQuery.AsNoTracking(), "DepartmentID", "Name", selectedDepartment);
+            ViewBag.DepartmentID =
+                new SelectList(departmentsQuery.AsNoTracking(), "DepartmentID", "Name", selectedDepartment);
         }
 
         // GET: Courses/Delete/5
@@ -149,6 +145,7 @@ namespace ContosoUniversity.Controllers {
 
             var course = await _context.Courses
                 .Include(c => c.Department)
+
                 // Added this to increase performance s
                 .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.CourseID == id);
@@ -172,6 +169,26 @@ namespace ContosoUniversity.Controllers {
 
         private bool CourseExists(int id) {
             return _context.Courses.Any(e => e.CourseID == id);
+        }
+
+        // Added a new page to allow admins to update the number of credits for all course by a factor
+        public IActionResult UpdateCourseCredits() {
+            return View();
+        }
+
+        // This method will execute an update method to update all courses credit loads
+        // by the given factor.
+        // If rows were effected it returns the number of rows effected.
+        [HttpPost]
+        public async Task<IActionResult> UpdateCourseCredits(int? multiplier) {
+            if (multiplier != null) {
+                ViewData["RowsAffected"] =
+                    await _context.Database.ExecuteSqlCommandAsync(
+                        "UPDATE Course SET Credits = Credits * {0}",
+                        parameters: multiplier);
+            }
+
+            return View();
         }
 
     }

@@ -20,17 +20,67 @@ namespace ContosoUniversity.Controllers {
 
         // GET: Students
         // Modifying the index page to be able to load with a sorted order
+//        public async Task<IActionResult> Index(
+//            string sortOrder, 
+//            string currentFilter,
+//            string searchString,
+//            int? pageNumber) {
+//            // added this line so we can remember the page number and the sort the page was on
+//            ViewData["CurrentSort"] = sortOrder;
+//            ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+//            ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
+//            // This line was removed to allow us to keep track of pages
+//            //            ViewData["currentFilter"] = searchString;
+//
+//            if (searchString != null) {
+//                pageNumber = 1;
+//            }
+//            else {
+//                searchString = currentFilter;
+//            }
+//
+//            ViewData["CurrentFilter"] = searchString;
+//            
+//            var students = from s in _context.Students select s;
+//
+//            if (!String.IsNullOrEmpty(searchString)) {
+//                students = students.Where(
+//                    s => s.LastName.Contains(searchString) ||
+//                         s.FirstMidName.Contains(searchString));
+//            }
+//            
+//            switch (sortOrder) {
+//                case "name_desc":
+//                    students = students.OrderByDescending(s => s.LastName);
+//                    break;
+//                case "Date":
+//                    students = students.OrderBy(s => s.EnrollmentDate);
+//                    break;
+//
+//                case "date_desc":
+//
+//                    students = students.OrderByDescending(s => s.EnrollmentDate);
+//                    break;
+//                default:
+//                    students = students.OrderBy(s => s.LastName);
+//                    break;
+//            }
+//
+//            int pageSize = 3;
+//            return View(await PaginatedList<Student>.CreateAsync(students.AsNoTracking(), pageNumber ?? 1, pageSize));
+//        }
+
+
         public async Task<IActionResult> Index(
-            string sortOrder, 
+            string sortOrder,
             string currentFilter,
             string searchString,
             int? pageNumber) {
-            // added this line so we can remember the page number and the sort the page was on
             ViewData["CurrentSort"] = sortOrder;
-            ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
-            ViewData["DateSortParm"] = sortOrder == "Date" ? "date_desc" : "Date";
-            // This line was removed to allow us to keep track of pages
-            //            ViewData["currentFilter"] = searchString;
+            ViewData["NameSortParm"] =
+                String.IsNullOrEmpty(sortOrder) ? "LastName_desc" : "";
+            ViewData["DateSortParm"] =
+                sortOrder == "EnrollmentDate" ? "EnrollmentDate_desc" : "EnrollmentDate";
 
             if (searchString != null) {
                 pageNumber = 1;
@@ -40,35 +90,42 @@ namespace ContosoUniversity.Controllers {
             }
 
             ViewData["CurrentFilter"] = searchString;
-            
-            var students = from s in _context.Students select s;
+
+            var students = from s in _context.Students
+                select s;
 
             if (!String.IsNullOrEmpty(searchString)) {
-                students = students.Where(
-                    s => s.LastName.Contains(searchString) ||
-                         s.FirstMidName.Contains(searchString));
+                students = students.Where(s => s.LastName.Contains(searchString)
+                                               || s.FirstMidName.Contains(searchString));
             }
-            
-            switch (sortOrder) {
-                case "name_desc":
-                    students = students.OrderByDescending(s => s.LastName);
-                    break;
-                case "Date":
-                    students = students.OrderBy(s => s.EnrollmentDate);
-                    break;
 
-                case "date_desc":
+            // This statement replaces the default statement from the
+            // switched version
+            if (string.IsNullOrEmpty(sortOrder)) {
+                sortOrder = "LastName";
+            }
 
-                    students = students.OrderByDescending(s => s.EnrollmentDate);
-                    break;
-                default:
-                    students = students.OrderBy(s => s.LastName);
-                    break;
+            bool descending = false;
+
+            // This is checking for ether students name or
+            // enrollment date should be descending.
+            if (sortOrder.EndsWith("_desc")) {
+                sortOrder = sortOrder.Substring(0, sortOrder.Length - 5);
+                descending = true;
+            }
+
+            if (descending) {
+                students = students.OrderByDescending(e => EF.Property<object>(e, sortOrder));
+            }
+            else {
+                students = students.OrderBy(e => EF.Property<object>(e, sortOrder));
             }
 
             int pageSize = 3;
-            return View(await PaginatedList<Student>.CreateAsync(students.AsNoTracking(), pageNumber ?? 1, pageSize));
+            return View(await PaginatedList<Student>.CreateAsync(students.AsNoTracking(),
+                pageNumber ?? 1, pageSize));
         }
+
 
         // GET: Students/Details/5
         public async Task<IActionResult> Details(int? id) {

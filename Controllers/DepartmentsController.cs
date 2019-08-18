@@ -29,10 +29,21 @@ namespace ContosoUniversity.Controllers {
             if (id == null) {
                 return NotFound();
             }
+            
+            // A query string used to make to retrieve custom entities from the database.
+            string querry = "SELECT * FROM Department WHERE DepartmentID = {0}";
 
+            // Using the custom query string a custom entity is selected and returned rather than
+            // using the included querys the framework prviveds by default
             var department = await _context.Departments
+                .FromSql(querry, id)
                 .Include(d => d.Administrator)
-                .FirstOrDefaultAsync(m => m.DepartmentID == id);
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+
+//            var department = await _context.Departments
+//                .Include(d => d.Administrator)
+//                .FirstOrDefaultAsync(m => m.DepartmentID == id);
 
             if (department == null) {
                 return NotFound();
